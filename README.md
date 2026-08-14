@@ -1,4 +1,5 @@
-# Polar Yii
+
+# Polar Yii - интеграция с Polar для выгрузки и анализа личных тренировок [WIP]
 
 Yii2 application with Docker (PHP + PostgreSQL).
 
