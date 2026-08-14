@@ -61,6 +61,17 @@ AppAsset::register($this);
 
 <main id="main" class="flex-shrink-0 mt-5 pt-4" role="main">
     <div class="container">
+        <?php foreach (Yii::$app->session->getAllFlashes() as $type => $message): ?>
+            <?php
+            $cssType = $type === 'error' ? 'danger' : $type;
+            $messages = is_array($message) ? $message : [$message];
+            ?>
+            <?php foreach ($messages as $flash): ?>
+                <div class="alert alert-<?= Html::encode($cssType) ?>" role="alert">
+                    <?= Html::encode((string) $flash) ?>
+                </div>
+            <?php endforeach; ?>
+        <?php endforeach; ?>
         <?= $content ?>
     </div>
 </main>
