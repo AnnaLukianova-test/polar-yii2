@@ -1,0 +1,14 @@
+/vendor/
+/app/vendor/
+/node_modules/
+/app/runtime/
+/app/web/assets/
+
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+.env
+.env.local
