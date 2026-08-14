@@ -1,0 +1,32 @@
+{
+    "name": "polar/yii-app",
+    "description": "Polar Yii2 application",
+    "type": "project",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.2",
+        "yiisoft/yii2": "~2.0.49",
+        "yiisoft/yii2-bootstrap5": "~2.0.4",
+        "yiisoft/yii2-symfonymailer": "~2.0.3"
+    },
+    "require-dev": {
+        "yiisoft/yii2-gii": "~2.2.0"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        },
+        "process-timeout": 1800
+    },
+    "autoload": {
+        "psr-4": {
+            "app\\": ""
+        }
+    }
+}
