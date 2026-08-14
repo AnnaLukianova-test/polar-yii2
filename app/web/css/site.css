@@ -1,0 +1,11 @@
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.auth-login {
+    padding-top: 2rem;
+}
+
+.profile-index {
+    padding-top: 1rem;
+}
