@@ -1,6 +1,6 @@
 <?php
 
-use app\models\forms\SignupForm;
+use app\api\forms\SignupForm;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 use yii\web\View;

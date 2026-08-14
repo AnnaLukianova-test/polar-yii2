@@ -1,11 +1,14 @@
 <?php
 
+use app\models\polar\PolarConnection;
 use app\models\User;
+use Yii;
 use yii\bootstrap5\Html;
 use yii\web\View;
 
 /** @var View $this */
 /** @var User $user */
+/** @var PolarConnection|null $polarConnection */
 
 $this->title = 'Profile';
 ?>
@@ -16,10 +19,20 @@ $this->title = 'Profile';
     </div>
 
     <div class="text-center">
-        <?= Html::button('Sync with My Polar App', [
-            'class' => 'btn btn-primary btn-lg',
-            'disabled' => true,
-            'title' => 'Coming soon',
-        ]) ?>
+        <?php if ($polarConnection === null): ?>
+            <?= Html::a('Connect My Polar App', ['/polar/connect'], [
+                'class' => 'btn btn-primary btn-lg',
+            ]) ?>
+        <?php else: ?>
+            <p class="text-muted mb-3">
+                Polar connected
+                <?php if ($polarConnection->last_synced_at): ?>
+                    · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?>
+                <?php endif; ?>
+            </p>
+            <?= Html::a('Sync with My Polar App', ['/polar/sync'], [
+                'class' => 'btn btn-primary btn-lg',
+            ]) ?>
+        <?php endif; ?>
     </div>
 </div>

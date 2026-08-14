@@ -15,27 +15,32 @@ $config = [
     'container' => [
         'singletons' => [
             app\repositories\UserRepository::class => app\repositories\UserRepository::class,
-            app\services\PasswordValidatorService::class => app\services\PasswordValidatorService::class,
-            app\services\AuthService::class => function ($container) {
-                return new app\services\AuthService(
+            app\services\user\UserService::class => function ($container) {
+                return new app\services\user\UserService(
                     $container->get(app\repositories\UserRepository::class),
-                    $container->get(app\services\PasswordValidatorService::class),
                 );
             },
-            app\services\SignupService::class => function ($container) {
-                return new app\services\SignupService(
-                    $container->get(app\repositories\UserRepository::class),
-                    $container->get(app\services\PasswordValidatorService::class),
+            app\services\reg\PasswordValidatorService::class => app\services\reg\PasswordValidatorService::class,
+            app\services\reg\AuthService::class => function ($container) {
+                return new app\services\reg\AuthService(
+                    $container->get(app\services\user\UserService::class),
+                    $container->get(app\services\reg\PasswordValidatorService::class),
                 );
             },
-            app\services\ProfileService::class => function ($container) {
-                return new app\services\ProfileService(
-                    $container->get(app\repositories\UserRepository::class),
+            app\services\reg\SignupService::class => function ($container) {
+                return new app\services\reg\SignupService(
+                    $container->get(app\services\user\UserService::class),
+                    $container->get(app\services\reg\PasswordValidatorService::class),
+                );
+            },
+            app\services\user\ProfileService::class => function ($container) {
+                return new app\services\user\ProfileService(
+                    $container->get(app\services\user\UserService::class),
                 );
             },
             app\services\PolarSyncService::class => app\services\PolarSyncService::class,
-            app\services\RateLimiterService::class => function () {
-                return new app\services\RateLimiterService(
+            app\services\security\RateLimiterService::class => function () {
+                return new app\services\security\RateLimiterService(
                     (int) (getenv('RATE_LIMIT_MAX_ATTEMPTS') ?: 5),
                     (int) (getenv('RATE_LIMIT_WINDOW') ?: 900),
                 );
@@ -88,11 +93,6 @@ $config = [
 ];
 
 if (YII_ENV_DEV) {
-    $config['bootstrap'][] = 'debug';
-    $config['modules']['debug'] = [
-        'class' => yii\debug\Module::class,
-        'allowedIPs' => ['*'],
-    ];
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => yii\gii\Module::class,
