@@ -2,8 +2,7 @@
 
 namespace app\services\polar;
 
-use app\api\services\OAuthStateValidator;
-use app\api\services\PolarOAuthStateValidator;
+use app\api\services\SessionStateValidator;
 use app\dto\polar\PolarTokenDto;
 use Yii;
 
@@ -17,7 +16,7 @@ class PolarOAuthService
     public function getAuthorizationUrl(int $userId): string
     {
         $state = Yii::$app->security->generateRandomString(32);
-        Yii::$app->session->set(OAuthStateValidator::SESSION_STATE_KEY, [
+        Yii::$app->session->set(SessionStateValidator::SESSION_STATE_KEY, [
             'state' => $state,
             'user_id' => $userId,
         ]);

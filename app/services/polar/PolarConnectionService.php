@@ -13,8 +13,16 @@ class PolarConnectionService
     ) {
     }
 
-    public function getPolarConnection(User $user): ?PolarConnection
+    /**
+     * Get the actual polar connection for the user. If the last connection is expired, return null.
+     */
+    public function getActualPolarConnection(User $user): ?PolarConnection
     {
-        return $this->polarConnections->findLastByUserId($user->id);
+        $lastConnection = $this->polarConnections->findLastByUserId($user->id);
+        
+        if ($lastConnection === null || $lastConnection->isTokenExpired()) {
+            return null;
+        }
+        return $lastConnection;
     }
 }

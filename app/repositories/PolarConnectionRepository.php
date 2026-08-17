@@ -10,9 +10,9 @@ class PolarConnectionRepository
     public function findLastByUserId(int $userId): ?PolarConnection
     {
         return PolarConnection::find()
-        ->where(['user_id' => $userId])
-        ->orderBy(['connected_at' => SORT_DESC])
-        ->one();
+            ->where(['user_id' => $userId])
+            ->orderBy(['connected_at' => SORT_DESC])
+            ->one();
     }
 
     public function create(CreatePolarConnectionDto $dto): ?PolarConnection
@@ -21,6 +21,7 @@ class PolarConnectionRepository
         $connection->user_id = $dto->user_id;
         $connection->polar_user_id = $dto->polar_user_id;
         $connection->access_token = $dto->access_token;
+        $connection->refresh_token = $dto->refresh_token;
         $connection->token_expires_at = $dto->token_expires_at;
         $connection->member_id = $dto->member_id;
         if ($connection->connected_at === null) {

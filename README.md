@@ -1,4 +1,3 @@
-
 # Polar Yii - интеграция с Polar для выгрузки и анализа личных тренировок [WIP]
 
 Yii2 application with Docker (PHP + PostgreSQL).
@@ -61,10 +60,12 @@ polar-yii/
 
 ## Polar Documentation
 
-[https://www.polar.com/accesslink-api/](https://www.polar.com/accesslink-api/)
+[[https://www.polar.com/polar-api-v4/#polar-accesslink-dynamic-api]](https://www.polar.com/polar-api-v4/#polar-accesslink-dynamic-api])
 
 ## Polar API Flow
-1) GET https://flow.polar.com/oauth2/authorization - receive code 
-2) POST https://polarremote.com/v2/oauth2/token - receive access token 
-3) POST /v3/users register the user before being able to access its data
-4) access data (e.g. GET /v3/exercises)
+
+1. GET https://flow.polar.com/oauth2/authorization - receive code 
+2. POST https://polarremote.com/v2/oauth2/token - receive access token 
+3. POST /v3/users register the user before being able to access its data
+4. access data (e.g. GET /v3/exercises)
+

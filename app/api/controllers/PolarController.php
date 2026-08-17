@@ -71,7 +71,7 @@ class PolarController extends Controller
 
         if (!$form->load(Yii::$app->request->get(), '') || !$form->validate()) {
             $errors = $form->getFirstErrors();
-            Yii::$app->session->setFlash(                                                                               
+            Yii::$app->session->setFlash(
                 'error',
                 $errors !== [] ? reset($errors) : 'Invalid Polar authorization response. Please try again.',
             );
@@ -99,7 +99,7 @@ class PolarController extends Controller
         $user = $this->requireUser();
 
         try {
-            $result = $this->syncService->syncExercises($user);
+            $result = $this->syncService->syncActivities($user);
         } catch (PolarApiException $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             Yii::$app->session->setFlash('error', $exception->getMessage());

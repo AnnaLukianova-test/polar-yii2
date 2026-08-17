@@ -11,11 +11,15 @@ use app\models\User;
 use app\repositories\PolarConnectionRepository;
 use app\repositories\PolarExerciseRepository;
 use app\services\security\CipherService;
+use DateInterval;
+use DateTimeImmutable;
 use RuntimeException;
 use Yii;
 
 class PolarSyncService
 {
+    private const MAX_SYNC_DAYS = 90;
+
     public function __construct(
         private PolarAccessLinkClient $client,
         private PolarConnectionRepository $connections,
@@ -29,30 +33,19 @@ class PolarSyncService
      */
     public function connect(User $user, PolarTokenDto $token): void
     {
-        $memberId = (string) $user->id;
-        $polarUserId = $token->polar_user_id;
-
-        try {
-            $registered = $this->client->registerUser($token->access_token, $memberId);
-            $polarUserId = (int) ($registered['polar-user-id'] ?? $polarUserId);
-        } catch (PolarApiException $exception) {
-            if (!$exception->isConflict()) {
-                throw $exception;
-            }
-        }
-
         try {
             $encryptedAccessToken = $this->cipher->encrypt($token->access_token);
+            $encryptedRefreshToken = $this->cipher->encrypt($token->refresh_token);
         } catch (RuntimeException $exception) {
             throw new PolarApiException('Unable to store Polar connection.', 0, $exception);
         }
 
         $dto = new CreatePolarConnectionDto(
             user_id: $user->id,
-            polar_user_id: $polarUserId,
             access_token: $encryptedAccessToken,
+            refresh_token: $encryptedRefreshToken,
             token_expires_at: date('Y-m-d H:i:s', time() + max(0, $token->expires_in)),
-            member_id: $memberId,
+            member_id: (string) $user->id,
         );
 
         $connection = $this->connections->create($dto);
@@ -70,116 +63,169 @@ class PolarSyncService
     }
 
     /**
-     * Syncs exercises from Polar to the database.
+     * Syncs training sessions from Polar to the database.
      */
-    public function syncExercises(User $user): PolarSyncResultDto
+    public function syncActivities(User $user): PolarSyncResultDto
     {
         $connection = $this->connections->findLastByUserId($user->id);
-        if ($connection === null) {
+        if ($connection === null || $connection->isTokenExpired()) {
             return new PolarSyncResultDto(0, ['Connect Polar before syncing exercises.']);
         }
 
-        if ($connection->isTokenExpired()) {
-            return new PolarSyncResultDto(0, ['Polar access expired. Please connect again.']);
-        }
-
         try {
-            $accessToken = $this->cipher->decrypt($connection->access_token);
+            $accessToken = $this->ensureValidAccessToken($connection);
+        } catch (PolarApiException $exception) {
+            Yii::error($exception->getMessage(), __METHOD__);
+
+            return new PolarSyncResultDto(0, [$exception->getMessage()]);
         } catch (RuntimeException $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
 
             return new PolarSyncResultDto(0, ['Polar access expired. Please connect again.']);
         }
 
-        $transaction = $this->client->createExerciseTransaction(
-            $accessToken,
-            (int) $connection->polar_user_id,
-        );
+        $dates = $this->resolveSyncRange($connection);
 
-        if ($transaction === null) {
+        try {
+            $sessions = [];
+            $dateCount = count($dates);
+            for ($i = 0; $i < $dateCount; $i++) {
+                $from = $dates[$i];
+                $to = $dates[$i + 1] ?? $this->toIso8601(
+                    (new DateTimeImmutable($dates[$i]))->modify('+1 day')
+                );
+                $currentDayTrainings = $this->client->listTrainingSessions($accessToken, $from, $to);
+                foreach ($currentDayTrainings as $training) {
+                    if (isset($training['favoriteTarget'])) { // only my running trainings have this field
+                        $sessions[] = $training;
+                    }
+                }
+            }
+        } catch (PolarApiException $exception) {
+            Yii::error($exception->getMessage(), __METHOD__);
+            //todo log real errors in MongoDB
+            var_dump($exception->getMessage());die;
+            return new PolarSyncResultDto(0, ['Failed to list Polar training sessions.']);
+        }
+
+        if ($sessions === []) {
             $this->touchLastSynced($connection);
 
             return new PolarSyncResultDto(0, noNewData: true);
         }
 
-        $transactionId = $this->extractTransactionId($transaction);
-        if ($transactionId === null) {
-            return new PolarSyncResultDto(0, ['Polar did not return a transaction id.']);
-        }
-
-        $urls = $this->client->listTransactionExercises(
-            $accessToken,
-            (int) $connection->polar_user_id,
-            $transactionId,
-        );
-
         $synced = 0;
         $errors = [];
 
-        foreach ($urls as $url) {
-            try {
-                $payload = $this->client->getExercise($accessToken, $url);
-                $exerciseId = $this->extractExerciseId($url, $payload);
-                if ($this->exercises->upsert($user->id, $exerciseId, $payload)) {
-                    $synced++;
-                } else {
-                    $errors[] = 'Failed to store Polar exercise ' . $exerciseId . '.';
-                }
-            } catch (PolarApiException $exception) {
-                Yii::error($exception->getMessage(), __METHOD__);
-                $errors[] = 'Failed to download a Polar exercise.';
+        foreach ($sessions as $session) {
+            $sessionId = $this->extractSessionId($session);
+            if ($sessionId === null) {
+                $errors[] = 'Polar returned a training session without an id.';
+                continue;
+            }
+
+            if ($this->exercises->upsert($user->id, $sessionId, $session)) {
+                $synced++;
+            } else {
+                $errors[] = 'Failed to store Polar exercise ' . $sessionId . '.';
             }
         }
 
         if ($errors === []) {
-            $this->client->commitExerciseTransaction(
-                $accessToken,
-                (int) $connection->polar_user_id,
-                $transactionId,
-            );
             $this->touchLastSynced($connection);
         }
 
         return new PolarSyncResultDto($synced, $errors);
     }
 
+    /**
+     * @throws PolarApiException
+     * @throws RuntimeException
+     */
+    private function ensureValidAccessToken(PolarConnection $connection): string
+    {
+        $accessToken = $this->cipher->decrypt($connection->access_token);
+
+        if (!$connection->isTokenExpired()) {
+            return $accessToken;
+        }
+
+        if ($connection->refresh_token === null || $connection->refresh_token === '') {
+            throw new PolarApiException('Polar access expired. Please connect again.');
+        }
+
+        $refreshToken = $this->cipher->decrypt($connection->refresh_token);
+        $token = $this->client->refreshAccessToken($refreshToken);
+
+        $connection->access_token = $this->cipher->encrypt($token->access_token);
+        $connection->refresh_token = $this->cipher->encrypt($token->refresh_token);
+        $connection->token_expires_at = date('Y-m-d H:i:s', time() + max(0, $token->expires_in));
+
+        if (!$this->connections->save($connection)) {
+            throw new PolarApiException('Unable to store refreshed Polar tokens.');
+        }
+
+        return $token->access_token;
+    }
+
+    /**
+     * @return string[] ISO 8601 datetimes at 00:00:00, one per calendar day, inclusive of both ends
+     */
+    private function resolveSyncRange(PolarConnection $connection): array
+    {
+        $now = new DateTimeImmutable('now');
+        $to = $now->modify('+1 day')->setTime(0, 0);
+
+        if ($connection->last_synced_at !== null && $connection->last_synced_at !== '') {
+            $from = (new DateTimeImmutable($connection->last_synced_at))->setTime(0, 0);
+        } else {
+            $from = $to->sub(new DateInterval('P' . self::MAX_SYNC_DAYS . 'D'));
+        }
+
+        $earliest = $to->sub(new DateInterval('P' . self::MAX_SYNC_DAYS . 'D'));
+        if ($from < $earliest) {
+            $from = $earliest;
+        }
+
+        if ($from >= $to) {
+            $from = $to->sub(new DateInterval('P1D'));
+        }
+
+        $dates = [];
+        $current = $from;
+        while ($current <= $to) {
+            $dates[] = $this->toIso8601($current);
+            $current = $current->modify('+1 day');
+        }
+
+        return $dates;
+    }
+
+    private function toIso8601(DateTimeImmutable $date): string
+    {
+        return $date->format('Y-m-d\TH:i:s');
+    }
+
+    /**
+     * @param array<string, mixed> $session
+     */
+    private function extractSessionId(array $session): ?string
+    {
+        $identifier = $session['identifier'] ?? null;
+        if (is_array($identifier) && !empty($identifier['id'])) {
+            return (string) $identifier['id'];
+        }
+
+        if (!empty($session['id'])) {
+            return (string) $session['id'];
+        }
+
+        return null;
+    }
+
     private function touchLastSynced(PolarConnection $connection): void
     {
         $connection->last_synced_at = date('Y-m-d H:i:s');
         $this->connections->save($connection);
-    }
-
-    /**
-     * @param array<string, mixed> $transaction
-     */
-    private function extractTransactionId(array $transaction): ?int
-    {
-        if (isset($transaction['transaction-id'])) {
-            return (int) $transaction['transaction-id'];
-        }
-
-        $resourceUri = (string) ($transaction['resource-uri'] ?? '');
-        if ($resourceUri === '') {
-            return null;
-        }
-
-        $parts = explode('/', rtrim($resourceUri, '/'));
-        $last = end($parts);
-
-        return is_numeric($last) ? (int) $last : null;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private function extractExerciseId(string $url, array $payload): string
-    {
-        if (!empty($payload['id'])) {
-            return (string) $payload['id'];
-        }
-
-        $parts = explode('/', rtrim($url, '/'));
-
-        return (string) end($parts);
     }
 }

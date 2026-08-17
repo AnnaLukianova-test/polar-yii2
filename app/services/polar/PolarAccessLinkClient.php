@@ -10,6 +10,27 @@ use GuzzleHttp\Exception\RequestException;
 
 class PolarAccessLinkClient
 {
+    /** @var string[] */
+    private const TRAINING_FEATURES = [
+     //   'samples',
+        'test-results',
+        'training-load-report',
+        'laps',
+        'hill-splits',
+        'routes',
+        'statistics',
+        'zones',
+        'pause-times',
+        'strength-training-results',
+        'comments',
+        'physical-info',
+    ];
+
+    /** @var string */
+    private const TRAINING_SESSIONS_LIST_URL = '/v4/data/training-sessions/list';
+
+    private const TRAINING_TARGETS_URL = '/v4/data/training-target/calendar-targets';
+
     public function __construct(
         private string $clientId,
         private string $clientSecret,
@@ -30,15 +51,77 @@ class PolarAccessLinkClient
             'response_type' => 'code',
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
-            'scope' => 'accesslink.read_all',
+            'scope' => 'training_sessions:read',
             'state' => $state,
         ]);
     }
 
     /**
-     * Exchanges Polar OAuth authorization code for a token.
+     * Exchanges Polar OAuth authorization code for tokens.
      */
     public function exchangeAuthorizationCode(string $code): PolarTokenDto
+    {
+        $response = $this->requestToken([
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => $this->redirectUri,
+        ]);
+
+        return $this->toTokenDto($response);
+    }
+
+    /**
+     * Refreshes Polar access token using a refresh token.
+     */
+    public function refreshAccessToken(string $refreshToken): PolarTokenDto
+    {
+        $response = $this->requestToken([
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refreshToken,
+        ]);
+
+        return $this->toTokenDto($response, $refreshToken);
+    }
+
+    /**
+     * Lists training sessions for the given date range (max 90 days).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listTrainingSessions(string $accessToken, string $from, string $to): array
+    {
+        $query = http_build_query([
+            'from' => $from,
+            'to' => $to,
+        ]);
+        foreach (self::TRAINING_FEATURES as $feature) {
+            $query .= '&features=' . rawurlencode($feature);
+        }
+
+        $response = $this->request(
+            'GET',
+            $this->apiBaseUrl . self::TRAINING_SESSIONS_LIST_URL . '?' . $query,
+            ['headers' => $this->bearerHeaders($accessToken)],
+            allowNoContent: true,
+        );
+
+        if ($response === null) {
+            return [];
+        }
+
+        $sessions = $response['trainingSessions'] ?? [];
+        if (!is_array($sessions)) {
+            return [];
+        }
+
+        return array_values(array_filter($sessions, 'is_array'));
+    }
+
+    /**
+     * @param array<string, string> $formParams
+     * @return array<string, mixed>
+     */
+    private function requestToken(array $formParams): array
     {
         $response = $this->request('POST', $this->tokenUrl, [
             'headers' => [
@@ -46,89 +129,26 @@ class PolarAccessLinkClient
                 'Content-Type' => 'application/x-www-form-urlencoded',
                 'Accept' => 'application/json;charset=UTF-8',
             ],
-            'form_params' => [
-                'grant_type' => 'authorization_code',
-                'code' => $code,
-                'redirect_uri' => $this->redirectUri,
-            ],
+            'form_params' => $formParams,
         ]);
 
-        $accessToken = (string) ($response['access_token'] ?? '');
-        $expiresIn = (int) ($response['expires_in'] ?? 0);
-        $polarUserId = (int) ($response['x_user_id'] ?? 0);
+        return $response ?? [];
+    }
 
-        if ($accessToken === '' || $polarUserId === 0) {
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function toTokenDto(array $response, ?string $fallbackRefreshToken = null): PolarTokenDto
+    {
+        $accessToken = (string) ($response['access_token'] ?? '');
+        $refreshToken = (string) ($response['refresh_token'] ?? $fallbackRefreshToken ?? '');
+        $expiresIn = (int) ($response['expires_in'] ?? 0);
+
+        if ($accessToken === '' || $refreshToken === '') {
             throw new PolarApiException('Polar token response is missing required fields.');
         }
 
-        return new PolarTokenDto($accessToken, $expiresIn, $polarUserId);
-    }
-
-    /**
-     *  must register the user before being able to access its data
-     * https://www.polar.com/accesslink-api/?srsltid=AfmBOooEnV3SzWTpF0qBrLwOzS-9npNUsx7FzxpgTBVL8Rk-xnm0fRXE#users
-     * @return array<string, mixed>
-     */
-    public function registerUser(string $accessToken, string $memberId): array
-    {
-        return $this->request('POST', $this->apiBaseUrl . '/v3/users', [
-            'headers' => $this->bearerHeaders($accessToken),
-            'json' => [
-                'member-id' => $memberId,
-            ],
-        ]);
-    }
-
-    /**
-     * @return array<string, mixed>|null transaction payload, or null when there is no new data (HTTP 204)
-     */
-    public function createExerciseTransaction(string $accessToken, int $polarUserId): ?array
-    {
-        return $this->request(
-            'POST',
-            $this->apiBaseUrl . '/v3/users/' . $polarUserId . '/exercise-transactions',
-            ['headers' => $this->bearerHeaders($accessToken)],
-            allowNoContent: true,
-        );
-    }
-
-    /**
-     * @return string[] exercise resource URLs
-     */
-    public function listTransactionExercises(string $accessToken, int $polarUserId, int $transactionId): array
-    {
-        $response = $this->request(
-            'GET',
-            $this->apiBaseUrl . '/v3/users/' . $polarUserId . '/exercise-transactions/' . $transactionId,
-            ['headers' => $this->bearerHeaders($accessToken)],
-        );
-
-        $urls = $response['exercises'] ?? [];
-        if (!is_array($urls)) {
-            return [];
-        }
-
-        return array_values(array_filter($urls, 'is_string'));
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getExercise(string $accessToken, string $exerciseUrl): array
-    {
-        return $this->request('GET', $exerciseUrl, [
-            'headers' => $this->bearerHeaders($accessToken),
-        ]);
-    }
-
-    public function commitExerciseTransaction(string $accessToken, int $polarUserId, int $transactionId): void
-    {
-        $this->request(
-            'PUT',
-            $this->apiBaseUrl . '/v3/users/' . $polarUserId . '/exercise-transactions/' . $transactionId,
-            ['headers' => $this->bearerHeaders($accessToken)],
-            allowNoContent: true,
-        );
+        return new PolarTokenDto($accessToken, $refreshToken, $expiresIn);
     }
 
     /**
@@ -142,7 +162,7 @@ class PolarAccessLinkClient
         } catch (RequestException $exception) {
             throw $this->toApiException($exception);
         } catch (GuzzleException $exception) {
-            throw new PolarApiException('Polar API request failed.', 0, $exception);
+            throw new PolarApiException("Polar API request failed:{$exception->getMessage()}", 0, $exception);
         }
 
         $status = $response->getStatusCode();
@@ -168,7 +188,6 @@ class PolarAccessLinkClient
         return [
             'Authorization' => 'Bearer ' . $accessToken,
             'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
         ];
     }
 
@@ -183,6 +202,6 @@ class PolarAccessLinkClient
             default => 'Polar API request failed.',
         };
 
-        return new PolarApiException($message, $status, $exception);
+        return new PolarApiException($message . $exception->getMessage(), $status, $exception);
     }
 }

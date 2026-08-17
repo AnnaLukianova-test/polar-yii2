@@ -2,7 +2,7 @@
 
 namespace app\api\forms;
 
-use app\api\services\OAuthStateValidator;
+use app\api\services\SessionStateValidator;
 use yii\base\Model;
 
 class CallbackForm extends Model
@@ -42,7 +42,7 @@ class CallbackForm extends Model
             return;
         }
 
-        if (!OAuthStateValidator::validate($this->state, $this->userId)) {
+        if (!SessionStateValidator::validate($this->state, $this->userId)) {
             $this->addError($attribute, 'Invalid Polar authorization response. Please try again.');
         }
     }

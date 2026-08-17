@@ -30,7 +30,7 @@ $this->title = 'Profile';
                     · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?>
                 <?php endif; ?>
             </p>
-            <?= Html::a('Sync with My Polar App', ['/polar/sync'], [
+            <?= Html::a('Sync running sessions with My Polar App', ['/polar/sync'], [
                 'class' => 'btn btn-primary btn-lg',
             ]) ?>
         <?php endif; ?>

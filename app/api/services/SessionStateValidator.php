@@ -4,7 +4,7 @@ namespace app\api\services;
 
 use Yii;
 
-class OAuthStateValidator
+class SessionStateValidator
 {
     public const SESSION_STATE_KEY = 'polar_oauth_state';
 

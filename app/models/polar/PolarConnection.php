@@ -9,8 +9,9 @@ use yii\db\ActiveRecord;
 /**
  * @property int $id
  * @property int $user_id
- * @property int $polar_user_id
+ * @property int|null $polar_user_id
  * @property string $access_token
+ * @property string|null $refresh_token
  * @property string $token_expires_at
  * @property string $member_id
  * @property string $connected_at
@@ -30,6 +31,6 @@ class PolarConnection extends ActiveRecord
 
     public function isTokenExpired(): bool
     {
-        return strtotime((string) $this->token_expires_at) <= time();
+        return strtotime($this->token_expires_at) < time();
     }
 }
