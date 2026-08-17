@@ -9,6 +9,7 @@ use yii\web\View;
 /** @var View $this */
 /** @var User $user */
 /** @var PolarConnection|null $polarConnection */
+/** @var int $polarExerciseCount */
 
 $this->title = 'Profile';
 ?>
@@ -26,6 +27,7 @@ $this->title = 'Profile';
         <?php else: ?>
             <p class="text-muted mb-3">
                 Polar connected
+                · <?= (int) $polarExerciseCount ?> Polar exercise(s)
                 <?php if ($polarConnection->last_synced_at): ?>
                     · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?>
                 <?php endif; ?>

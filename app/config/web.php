@@ -16,34 +16,12 @@ $config = [
     'container' => [
         'singletons' => [
             app\repositories\UserRepository::class => app\repositories\UserRepository::class,
-            app\services\user\UserService::class => function ($container) {
-                return new app\services\user\UserService(
-                    $container->get(app\repositories\UserRepository::class),
-                );
-            },
+            app\services\user\UserService::class => app\services\user\UserService::class,
             app\services\reg\PasswordValidatorService::class => app\services\reg\PasswordValidatorService::class,
-            app\services\reg\AuthService::class => function ($container) {
-                return new app\services\reg\AuthService(
-                    $container->get(app\services\user\UserService::class),
-                    $container->get(app\services\reg\PasswordValidatorService::class),
-                );
-            },
-            app\services\reg\SignupService::class => function ($container) {
-                return new app\services\reg\SignupService(
-                    $container->get(app\services\user\UserService::class),
-                    $container->get(app\services\reg\PasswordValidatorService::class),
-                );
-            },
-            app\services\profile\ProfileService::class => function ($container) {
-                return new app\services\profile\ProfileService(
-                    $container->get(app\services\user\UserService::class),
-                );
-            },
-            app\services\polar\PolarConnectionService::class => function ($container) {
-                return new app\services\polar\PolarConnectionService(
-                    $container->get(app\repositories\PolarConnectionRepository::class),
-                );
-            },
+            app\services\reg\AuthService::class => app\services\reg\AuthService::class,
+            app\services\reg\SignupService::class => app\services\reg\SignupService::class,
+            app\services\profile\ProfileService::class => app\services\profile\ProfileService::class,
+            app\services\polar\PolarConnectionService::class => app\services\polar\PolarConnectionService::class,
             app\repositories\PolarConnectionRepository::class => app\repositories\PolarConnectionRepository::class,
             app\repositories\PolarExerciseRepository::class => app\repositories\PolarExerciseRepository::class,
             app\services\polar\PolarAccessLinkClient::class => function () {
@@ -57,20 +35,8 @@ $config = [
                     new GuzzleHttp\Client(['timeout' => 30]),
                 );
             },
-            app\services\polar\PolarOAuthService::class => function ($container) {
-                return new app\services\polar\PolarOAuthService(
-                    $container->get(app\services\polar\PolarAccessLinkClient::class),
-                );
-            },
-            app\api\services\PolarOAuthStateValidator::class => app\api\services\PolarOAuthStateValidator::class,
-            app\services\polar\PolarSyncService::class => function ($container) {
-                return new app\services\polar\PolarSyncService(
-                    $container->get(app\services\polar\PolarAccessLinkClient::class),
-                    $container->get(app\repositories\PolarConnectionRepository::class),
-                    $container->get(app\repositories\PolarExerciseRepository::class),
-                    $container->get(app\services\security\CipherService::class),
-                );
-            },
+            app\services\polar\PolarOAuthService::class => app\services\polar\PolarOAuthService::class,
+            app\services\polar\PolarSyncService::class => app\services\polar\PolarSyncService::class,
             app\services\security\CipherService::class => function () {
                 return new app\services\security\CipherService(
                     getenv('POLAR_TOKEN_ENCRYPTION_KEY') ?: getenv('COOKIE_VALIDATION_KEY') ?: '',

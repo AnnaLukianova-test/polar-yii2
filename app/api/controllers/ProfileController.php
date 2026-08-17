@@ -45,6 +45,7 @@ class ProfileController extends Controller
         return $this->render('index', [
             'user' => $user,
             'polarConnection' => $this->polarConnectionService->getActualPolarConnection($user),
+            'polarExerciseCount' => $this->polarConnectionService->countExercisesByUserId($user->id),
         ]);
     }
 }

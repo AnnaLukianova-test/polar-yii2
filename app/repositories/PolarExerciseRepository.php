@@ -6,6 +6,13 @@ use app\models\polar\PolarExercise;
 
 class PolarExerciseRepository
 {
+    public function countByUserId(int $userId): int
+    {
+        return (int) PolarExercise::find()
+            ->where(['user_id' => $userId])
+            ->count();
+    }
+
     /**
      * @param array<string, mixed> $payload
      */

@@ -5,11 +5,13 @@ namespace app\services\polar;
 use app\models\polar\PolarConnection;
 use app\models\User;
 use app\repositories\PolarConnectionRepository;
+use app\repositories\PolarExerciseRepository;
 
 class PolarConnectionService
 {
     public function __construct(
         private PolarConnectionRepository $polarConnections,
+        private PolarExerciseRepository $polarExercises,
     ) {
     }
 
@@ -24,5 +26,10 @@ class PolarConnectionService
             return null;
         }
         return $lastConnection;
+    }
+
+    public function countExercisesByUserId(int $userId): int
+    {
+        return $this->polarExercises->countByUserId($userId);
     }
 }
