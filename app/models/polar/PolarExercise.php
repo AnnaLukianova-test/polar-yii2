@@ -20,19 +20,6 @@ class PolarExercise extends ActiveRecord
         return '{{%polar_exercise}}';
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-
-        if (is_array($this->payload)) {
-            $this->payload = json_encode($this->payload, JSON_UNESCAPED_UNICODE);
-        }
-
-        return true;
-    }
-
     public function afterFind(): void
     {
         parent::afterFind();
