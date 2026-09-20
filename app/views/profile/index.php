@@ -10,6 +10,7 @@ use yii\web\View;
 /** @var User $user */
 /** @var PolarConnection|null $polarConnection */
 /** @var int $polarExerciseCount */
+/** @var array $activityGraph */
 
 $this->title = 'Profile';
 ?>
@@ -37,4 +38,6 @@ $this->title = 'Profile';
             ]) ?>
         <?php endif; ?>
     </div>
+
+    <?= $this->render('_activity_graph', ['activityGraph' => $activityGraph]) ?>
 </div>

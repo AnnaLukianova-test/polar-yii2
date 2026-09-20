@@ -10,6 +10,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $user_id
  * @property string $polar_exercise_id
+ * @property string $training_date
  * @property array|string $payload
  * @property string $synced_at
  */

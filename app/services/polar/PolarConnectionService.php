@@ -28,6 +28,7 @@ class PolarConnectionService
         return $lastConnection;
     }
 
+    //todo: move to polar exercise service
     public function countExercisesByUserId(int $userId): int
     {
         return $this->polarExercises->countByUserId($userId);

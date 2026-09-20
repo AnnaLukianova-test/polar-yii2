@@ -2,6 +2,7 @@
 
 namespace app\api\controllers;
 
+use app\services\polar\graph\ActivityGraphService;
 use app\services\polar\PolarConnectionService;
 use app\services\profile\ProfileService;
 use yii\filters\AccessControl;
@@ -15,6 +16,7 @@ class ProfileController extends Controller
         $module,
         private ProfileService $profileService,
         private PolarConnectionService $polarConnectionService,
+        private ActivityGraphService $activityGraphService,
         $config = [],
     ) {
         parent::__construct($id, $module, $config);
@@ -46,6 +48,7 @@ class ProfileController extends Controller
             'user' => $user,
             'polarConnection' => $this->polarConnectionService->getActualPolarConnection($user),
             'polarExerciseCount' => $this->polarConnectionService->countExercisesByUserId($user->id),
+            'activityGraph' => $this->activityGraphService->getLastYearWeeklyGroupedTrainingsCount($user->id),
         ]);
     }
 }

@@ -22,6 +22,7 @@ $config = [
             app\services\reg\SignupService::class => app\services\reg\SignupService::class,
             app\services\profile\ProfileService::class => app\services\profile\ProfileService::class,
             app\services\polar\PolarConnectionService::class => app\services\polar\PolarConnectionService::class,
+            app\services\polar\graph\ActivityGraphService::class => app\services\polar\graph\ActivityGraphService::class,
             app\repositories\PolarConnectionRepository::class => app\repositories\PolarConnectionRepository::class,
             app\repositories\PolarExerciseRepository::class => app\repositories\PolarExerciseRepository::class,
             app\services\polar\PolarAccessLinkClient::class => function () {
@@ -80,6 +81,9 @@ $config = [
             ],
         ],
         'db' => $db,
+        'assetManager' => [
+            'appendTimestamp' => true,
+        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
