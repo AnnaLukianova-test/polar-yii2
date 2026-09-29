@@ -1,6 +1,6 @@
 <?php
 
-namespace app\services\profile;
+namespace app\api\services;
 
 use app\models\User;
 use app\services\user\UserService;

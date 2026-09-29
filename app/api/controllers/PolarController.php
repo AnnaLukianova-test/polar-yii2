@@ -3,11 +3,11 @@
 namespace app\api\controllers;
 
 use app\api\forms\CallbackForm;
+use app\api\services\ProfileService;
 use app\models\User;
 use app\exceptions\polar\PolarApiException;
 use app\services\polar\PolarOAuthService;
 use app\services\polar\PolarSyncService;
-use app\services\profile\ProfileService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;

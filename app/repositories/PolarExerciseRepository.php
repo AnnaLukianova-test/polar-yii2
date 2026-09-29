@@ -39,6 +39,17 @@ class PolarExerciseRepository
     }
 
     /**
+     * @return list<PolarExercise>
+     */
+    public function findAllByUserIdOrderedByTrainingDateDesc(int $userId): array
+    {
+        return PolarExercise::find()
+            ->where(['user_id' => $userId])
+            ->orderBy(['training_date' => SORT_DESC, 'id' => SORT_DESC])
+            ->all();
+    }
+
+    /**
      * @param array<string, mixed> $payload
      */
     public function upsert(int $userId, string $polarExerciseId, array $payload): bool

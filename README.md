@@ -50,7 +50,7 @@ polar-yii/
 │   └── php/          # Dockerfile, nginx.conf, entrypoint
 └── app/              # Yii2 application (bind-mounted)
     ├── controllers/  # thin HTTP layer
-    ├── services/     # business logic (AuthService, ProfileService, PasswordValidatorService)
+    ├── services/     # business logic (AuthService, PasswordValidatorService)
     ├── repositories/ # data access (UserRepository)
     ├── models/       # AR entities & form models
     └── migrations/

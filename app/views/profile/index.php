@@ -30,7 +30,7 @@ $this->title = 'Profile';
                 Polar connected
                 · <?= (int) $polarExerciseCount ?> Polar exercise(s)
                 <?php if ($polarConnection->last_synced_at): ?>
-                    · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?>
+                    · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?> UTC
                 <?php endif; ?>
             </p>
             <?= Html::a('Sync running sessions with My Polar App', ['/polar/sync'], [
@@ -40,4 +40,10 @@ $this->title = 'Profile';
     </div>
 
     <?= $this->render('_activity_graph', ['activityGraph' => $activityGraph]) ?>
+
+    <div class="text-center mt-4">
+        <?= Html::a('Trainings list', ['/polar/trainings'], [
+            'class' => 'btn btn-primary btn-lg',
+        ]) ?>
+    </div>
 </div>

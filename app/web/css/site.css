@@ -64,3 +64,18 @@ body {
     width: 11px;
     height: 11px;
 }
+
+.trainings-list {
+    padding-top: 1rem;
+}
+
+.trainings-list__discomfort {
+    width: 1%;
+    min-width: 5rem;
+}
+
+.trainings-list__foot-problem {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+}

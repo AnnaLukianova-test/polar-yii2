@@ -2,9 +2,9 @@
 
 namespace app\api\controllers;
 
+use app\api\services\ProfileService;
 use app\services\polar\graph\ActivityGraphService;
 use app\services\polar\PolarConnectionService;
-use app\services\profile\ProfileService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
