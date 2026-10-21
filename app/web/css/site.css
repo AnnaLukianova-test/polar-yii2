@@ -10,8 +10,59 @@ body {
     padding-top: 1rem;
 }
 
+.profile-index .btn-primary {
+    --bs-btn-color: #1a3a52;
+    --bs-btn-bg: #b9d7ee;
+    --bs-btn-border-color: #9ec8e6;
+    --bs-btn-hover-color: #1a3a52;
+    --bs-btn-hover-bg: #a3cbe8;
+    --bs-btn-hover-border-color: #8bb8dc;
+    --bs-btn-active-color: #1a3a52;
+    --bs-btn-active-bg: #8bb8dc;
+    --bs-btn-active-border-color: #7aabcf;
+    --bs-btn-disabled-color: #1a3a52;
+    --bs-btn-disabled-bg: #b9d7ee;
+    --bs-btn-disabled-border-color: #9ec8e6;
+}
+
+body.profile-page {
+    background-color: #f6efe4;
+    background-image: url("../images/hello-cats.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+body.profile-page #footer {
+    background-color: transparent;
+}
+
+.profile-hello {
+    background: transparent;
+    color: #1a3a52;
+}
+
+.profile-hello .lead {
+    color: #3d5a73 !important;
+}
+
+.profile-polar-action {
+    margin-top: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.profile-trainings-link {
+    margin-top: 1rem;
+}
+
 .activity-graph {
-    margin-top: 2.5rem;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 100%;
+    padding: 1rem 1.25rem 0.75rem;
+    background-color: #fffaf3;
+    border-radius: 12px;
 }
 
 .activity-graph__scroll {
