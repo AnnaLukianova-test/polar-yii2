@@ -33,4 +33,17 @@ class PolarConnectionService
     {
         return $this->polarExercises->countByUserId($userId);
     }
+
+    //todo: move to polar exercise service
+    public function getDaysWithoutTrainingByUserId(int $userId): ?string
+    {
+        $lastExerciseDate = $this->polarExercises->getLastExerciseByUserId($userId)?->training_date;
+        if ($lastExerciseDate === null) {
+            return null;
+        }
+        $today = new \DateTime();
+        $lastExerciseDate = new \DateTime($lastExerciseDate);
+        $diff = $today->diff($lastExerciseDate);
+        return $diff->days;
+    }
 }

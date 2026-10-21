@@ -21,7 +21,7 @@ AppAsset::register($this);
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
 </head>
-<body class="d-flex flex-column h-100">
+<body class="d-flex flex-column h-100<?= isset($this->params['bodyClass']) ? ' ' . Html::encode($this->params['bodyClass']) : '' ?>">
 <?php $this->beginBody() ?>
 
 <header id="header">

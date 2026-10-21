@@ -11,16 +11,17 @@ use yii\web\View;
 /** @var PolarConnection|null $polarConnection */
 /** @var int $polarExerciseCount */
 /** @var array $activityGraph */
-
+/** @var int|null $dayWithoutTraining */
 $this->title = 'Profile';
+$this->params['bodyClass'] = 'profile-page';
 ?>
 <div class="profile-index">
-    <div class="jumbotron text-center bg-light p-5 rounded-3 mb-4">
+    <div class="jumbotron profile-hello text-center p-5 rounded-3 mb-4">
         <h1 class="display-5">Hello, <?= Html::encode($user->getFullName()) ?>!</h1>
         <p class="lead text-muted mb-0"><?= Html::encode($user->email) ?></p>
     </div>
 
-    <div class="text-center">
+    <div class="profile-polar-action text-center">
         <?php if ($polarConnection === null): ?>
             <?= Html::a('Connect My Polar App', ['/polar/connect'], [
                 'class' => 'btn btn-primary btn-lg',
@@ -31,6 +32,7 @@ $this->title = 'Profile';
                 · <?= (int) $polarExerciseCount ?> Polar exercise(s)
                 <?php if ($polarConnection->last_synced_at): ?>
                     · last sync <?= Html::encode(Yii::$app->formatter->asDatetime($polarConnection->last_synced_at)) ?> UTC
+                    · <?= $dayWithoutTraining ?: '--'?> day(s) without training
                 <?php endif; ?>
             </p>
             <?= Html::a('Sync running sessions with My Polar App', ['/polar/sync'], [
@@ -41,7 +43,7 @@ $this->title = 'Profile';
 
     <?= $this->render('_activity_graph', ['activityGraph' => $activityGraph]) ?>
 
-    <div class="text-center mt-4">
+    <div class="profile-trainings-link text-center">
         <?= Html::a('Trainings list', ['/polar/trainings'], [
             'class' => 'btn btn-primary btn-lg',
         ]) ?>
